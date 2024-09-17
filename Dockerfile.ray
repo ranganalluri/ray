@@ -1,0 +1,10 @@
+FROM rayproject/ray:latest
+
+WORKDIR /app
+
+COPY ./code /app
+# Install necessary pip packages
+RUN pip install --no-cache-dir pandas  adlfs
+
+# Start the Ray node
+CMD ["bash", "-c", "ray start --head --ray-client-server-port=10001 --port=6379 --dashboard-host 0.0.0.0 --block"]

@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  ray-head:
+    build:
+      context: .
+      dockerfile: Dockerfile.ray
+    container_name: ray-head
+    ports:
+      - "6379:6379"  # Redis port
+      - "8265:8265"  # Dashboard port
+      - "10001:10001"
+    command: >
+      ray start --head --ray-client-server-port=10001 --port=6379 --dashboard-host 0.0.0.0 --block
+    environment:
+      - RAY_MEMORY_MONITOR_ERROR_THRESHOLD=0.8
+    shm_size: '5g'
+    networks:
+      - ray_net
+
+  ray-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.ray
+    depends_on:
+      - ray-head
+    scale: 2
+    command: >
+      ray start --address=ray-head:6379 --block
+    environment:
+      - RAY_MEMORY_MONITOR_ERROR_THRESHOLD=0.8
+    shm_size: '5g'
+    networks:
+      - ray_net
+
+networks:
+  ray_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.63.0.0/16
